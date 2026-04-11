@@ -1,0 +1,35 @@
+module top_module(
+    input [31:0] a,
+    input [31:0] b,
+    input sub,
+    output [31:0] sum
+);
+	wire [31:0] b_xor;   // b after optional inversion
+    wire cout_low;        // carry out from lower 16-bit adder
+
+    // 1. XOR b with {32{sub}} to conditionally invert all bits of b
+    //    When sub=0: b_xor = b (no change, addition)
+    //    When sub=1: b_xor = ~b (invert, subtraction)
+    assign b_xor = b ^ {32{sub}};
+
+    // 2. Lower 16-bit adder
+    //    cin = sub: when subtracting, this adds the +1 needed for two's complement
+    //    so we get a + ~b + 1 = a - b
+    add16 low_adder (
+        .a(a[15:0]),
+        .b(b_xor[15:0]),
+        .cin(sub),
+        .sum(sum[15:0]),
+        .cout(cout_low)
+    );
+
+    // 3. Upper 16-bit adder
+    //    cin = cout_low: carry ripples up from lower half as normal
+    add16 high_adder (
+        .a(a[31:16]),
+        .b(b_xor[31:16]),
+        .cin(cout_low),
+        .sum(sum[31:16]),
+        .cout()            // carry-out unused
+    );
+endmodule
