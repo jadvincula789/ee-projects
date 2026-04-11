@@ -1,0 +1,42 @@
+module top_module(
+    input [31:0] a,
+    input [31:0] b,
+    output [31:0] sum
+);
+    wire cout1;
+    wire [15:0] sum0_hi, sum1_hi;
+    wire cout0_hi, cout1_hi;
+
+    // 1. Lower 16-bit adder (a[15:0] + b[15:0] + cin=0)
+    add16 low_adder (
+        .a(a[15:0]),
+        .b(b[15:0]),
+        .cin(1'b0),
+        .sum(sum[15:0]),
+        .cout(cout1)
+    );
+
+    // 2. Upper 16-bit adder: Assume carry-in is 0
+    add16 hi_adder_c0 (
+        .a(a[31:16]),
+        .b(b[31:16]),
+        .cin(1'b0),
+        .sum(sum0_hi),
+        .cout(cout0_hi)
+    );
+
+    // 3. Upper 16-bit adder: Assume carry-in is 1
+    add16 hi_adder_c1 (
+        .a(a[31:16]),
+        .b(b[31:16]),
+        .cin(1'b1),
+        .sum(sum1_hi),
+        .cout(cout1_hi)
+    );
+
+    // 4. Mux to select the correct upper sum and carry-out
+    // If cout1 is 1, pick result from hi_adder_c1
+    assign sum[31:16] = cout1 ? sum1_hi : sum0_hi;
+
+
+endmodule
